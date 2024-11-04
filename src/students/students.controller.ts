@@ -17,7 +17,7 @@ import { Student } from './student.entity';
 import { CreateStudentDto } from './create-student.dto';
 import { UpdateStudentDto } from './update-student.dto';
 import { UpdateStudentPartialDto } from './update-student-partial.dto';
-import { Response } from 'express';
+import { Response, Request } from 'express';
 
 @Controller('students')
 export class StudentsController {
