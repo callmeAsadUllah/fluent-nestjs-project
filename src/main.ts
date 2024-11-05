@@ -35,5 +35,4 @@ async function bootstrap() {
   await app.listen(port);
 }
 
-const handler = serverless(bootstrap);
-export { handler };
+export const handler = serverless(bootstrap);
