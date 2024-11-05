@@ -1,75 +1,78 @@
 import {
   Body,
   Controller,
-  Delete,
   Get,
-  Param,
   Post,
+  Param,
   Put,
-  Req,
-  Res,
   Patch,
+  Delete,
 } from '@nestjs/common';
 
 import { StudentsService } from './students.service';
 
-import { Student } from './student.entity';
+import { Student } from './student.schema';
 import { CreateStudentDto } from './create-student.dto';
 import { UpdateStudentDto } from './update-student.dto';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { UpdateStudentPartialDto } from './update-student-partial.dto';
-import { Response, Request } from 'express';
 
-@Controller('students')
+@ApiTags('Students')
+@Controller('api/students')
 export class StudentsController {
   constructor(private readonly studentsService: StudentsService) {}
   @Get()
+  @ApiOperation({ summary: 'Get all students' })
+  @ApiResponse({
+    description: 'List of students',
+    type: [Student],
+  })
   async findListStudent(): Promise<Student[]> {
     const students = await this.studentsService.findListStudent();
     return students;
   }
 
   @Post()
+  @ApiOperation({ summary: 'Create a new student' })
+  @ApiResponse({
+    description: 'Student successfully created',
+    type: Student,
+  })
   async createStudent(
     @Body() createStudentDto: CreateStudentDto,
   ): Promise<Student> {
-    const student = await this.studentsService.createStudent(createStudentDto);
-    return student;
+    return await this.studentsService.createStudent(createStudentDto);
   }
 
-  @Put(':studentId')
-  async updateStudent(
-    @Param('studentId') studentId: string,
-    @Body() updateStudentDto: UpdateStudentDto,
-  ): Promise<Student> {
-    const student = await this.studentsService.updateStudent(
-      studentId,
-      updateStudentDto,
-    );
-    return student;
+  @Get(':id')
+  async findStudentById(@Param('id') id: string): Promise<Student> {
+    return await this.studentsService.findStudentById(id);
   }
 
-  @Patch(':studentId')
+  @Patch(':id')
   async updateStudentPartial(
-    @Param('studentId') studentId: string,
+    @Param('id') id: string,
     @Body() updateStudentPartialDto: UpdateStudentPartialDto,
   ): Promise<Student> {
-    const student = await this.studentsService.updateStudentPartial(
-      studentId,
+    return await this.studentsService.updateStudentPartial(
+      id,
       updateStudentPartialDto,
     );
-    return student;
   }
 
-  @Get(':studentId')
-  async findOneStudent(
-    @Param('studentId') studentId: string,
+  @Put(':id')
+  async updateStudent(
+    @Param('id') id: string,
+    @Body() updateStudentDto: UpdateStudentDto,
   ): Promise<Student> {
-    const student = await this.studentsService.findOneStudent(studentId);
-    return student;
+    return await this.studentsService.updateStudentPartial(
+      id,
+      updateStudentDto,
+    );
   }
 
-  @Delete(':studentId')
-  async deleteStudent(@Param('studentId') studentId: string): Promise<void> {
-    return await this.studentsService.deleteStudent(studentId);
+  @Delete(':id')
+  async deleteOneStudent(@Param('id') id: string): Promise<void> {
+    return await this.studentsService.deleteOneStudent(id);
   }
 }

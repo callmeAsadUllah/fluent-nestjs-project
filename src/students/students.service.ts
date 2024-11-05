@@ -1,15 +1,8 @@
-import {
-  InternalServerErrorException,
-  ConflictException,
-  Injectable,
-} from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
 
-import { InjectRepository } from '@nestjs/typeorm';
-
-import { Repository } from 'typeorm';
-
-import { Student } from './student.entity';
-
+import { Student, StudentDocument } from './student.schema';
 import { CreateStudentDto } from './create-student.dto';
 import { UpdateStudentDto } from './update-student.dto';
 import { UpdateStudentPartialDto } from './update-student-partial.dto';
@@ -17,101 +10,45 @@ import { UpdateStudentPartialDto } from './update-student-partial.dto';
 @Injectable()
 export class StudentsService {
   constructor(
-    @InjectRepository(Student)
-    private studentsRepository: Repository<Student>,
+    @InjectModel(Student.name)
+    private studentsModel: Model<StudentDocument>,
   ) {}
 
   async findListStudent(): Promise<Student[]> {
-    const students = await this.studentsRepository.find();
+    const students = await this.studentsModel.find().exec();
     return students;
   }
 
   async createStudent(createStudentDto: CreateStudentDto): Promise<Student> {
-    const studentEmail = await this.studentsRepository.findOne({
-      where: {
-        email: createStudentDto.email,
-      },
-    });
-
-    const studentUsername = await this.studentsRepository.findOne({
-      where: {
-        username: createStudentDto.username,
-      },
-    });
-
-    if (studentEmail) {
-      throw new ConflictException('Student with this email already exists.');
-    }
-
-    if (studentUsername) {
-      throw new ConflictException('Student with this username already exists.');
-    }
-
-    try {
-      const student = this.studentsRepository.create(createStudentDto);
-      return await this.studentsRepository.save(student);
-    } catch (error) {
-      throw new InternalServerErrorException(
-        'Failed to create student. Please try again later.',
-      );
-    }
-  }
-
-  async updateStudent(
-    studentId: string,
-    updateStudentDto: UpdateStudentDto,
-  ): Promise<Student> {
-    const student = await this.studentsRepository.findOne({
-      where: { studentId: studentId },
-    });
-
-    if (!student) {
-      throw new InternalServerErrorException('Student not found');
-    }
-
-    const updatedStudent = {
-      ...student,
-      ...updateStudentDto,
-    };
-    return await this.studentsRepository.save(updatedStudent);
+    const createdStudent = new this.studentsModel(createStudentDto);
+    return await createdStudent.save();
   }
 
   async updateStudentPartial(
-    studentId: string,
+    id: string,
     updateStudentPartialDto: UpdateStudentPartialDto,
   ): Promise<Student> {
-    const student = await this.studentsRepository.findOne({
-      where: { studentId: studentId },
-    });
-
-    if (!student) {
-      throw new InternalServerErrorException('Student not found');
-    }
-
-    const updatedStudentPartial = {
-      ...student,
-      ...updateStudentPartialDto,
-    };
-    return await this.studentsRepository.save(updatedStudentPartial);
+    const student = await this.findStudentById(id);
+    Object.assign(student, updateStudentPartialDto);
+    return await student.save();
   }
 
-  async findOneStudent(studentId: string): Promise<Student> {
-    const student = await this.studentsRepository.findOne({
-      where: { studentId: studentId },
-    });
-    if (!student) {
-      throw new InternalServerErrorException('Student not found.');
-    }
+  async updateStudent(
+    id: string,
+    updateStudentDto: UpdateStudentDto,
+  ): Promise<Student> {
+    const student = await this.findStudentById(id);
+    Object.assign(student, updateStudentDto);
+    return await student.save();
+  }
+
+  async findStudentById(id: string): Promise<Student> {
+    const student = await this.studentsModel.findById(id).exec();
     return student;
   }
 
-  async deleteStudent(studentId: string): Promise<void> {
-    const student = await this.studentsRepository.findOne({
-      where: { studentId: studentId },
-    });
-    if (!student) {
-      throw new InternalServerErrorException('Student not found.');
-    }
-    await this.studentsRepository.delete(student);
+  async deleteOneStudent(id: string): Promise<void> {
+    const student = await this.findStudentById(id);
+    await student.deleteOne();
   }
 }
