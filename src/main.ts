@@ -7,7 +7,6 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
-import serverless from 'serverless-http';
 
 async function bootstrap() {
   const port = process.env.PORT || 3000;
@@ -34,5 +33,3 @@ async function bootstrap() {
 
   await app.listen(port);
 }
-
-export const handler = serverless(bootstrap);
